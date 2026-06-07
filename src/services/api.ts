@@ -1,4 +1,6 @@
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL ||
+  "https://ukaxo1ks19.execute-api.ap-southeast-1.amazonaws.com/production/users";
 
 export interface Task {
   id: string;

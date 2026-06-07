@@ -84,10 +84,22 @@ const Index = () => {
       addToast("success", "Record updated successfully!");
     } catch (error) {
       console.error("Failed to update task:", error);
-
-      const message = error?.response?.data?.message || "Email Already Exist !";
-
-      addToast("error", message);
+      let errorMessage = "Failed to update record. Please try again.";
+      if (error && typeof error === "object") {
+        const anyError = error as any;
+        if (anyError.message) {
+          try {
+            const parsed = JSON.parse(anyError.message);
+            errorMessage = parsed.message || parsed.error || anyError.message;
+          } catch {
+            errorMessage = anyError.message;
+          }
+        }
+        if (anyError.response?.data?.message) {
+          errorMessage = anyError.response.data.message;
+        }
+      }
+      addToast("error", errorMessage);
     } finally {
       setIsSubmitting(false);
     }
@@ -97,14 +109,31 @@ const Index = () => {
     setDeletingId(id);
     try {
       await taskApi.delete(id);
-      setTasks((prev) => prev.filter((task) => task.id !== id));
+      await fetchTasks();
       if (editingTask?.id === id) {
         setEditingTask(null);
       }
       addToast("success", "Record deleted successfully!");
     } catch (error) {
       console.error("Failed to delete task:", error);
-      addToast("error", "Failed to delete record. Please try again.");
+      let errorMessage = "Failed to delete record. Please try again.";
+      // Direct ApiError message (may be JSON string)
+      if (error && typeof error === "object") {
+        const anyError = error as any;
+        if (anyError.message) {
+          try {
+            const parsed = JSON.parse(anyError.message);
+            errorMessage = parsed.message || parsed.error || anyError.message;
+          } catch {
+            errorMessage = anyError.message;
+          }
+        }
+        // Nested response payload (e.g., Axios style)
+        if (anyError.response && anyError.response.data && anyError.response.data.message) {
+          errorMessage = anyError.response.data.message;
+        }
+      }
+      addToast("error", errorMessage);
     } finally {
       setDeletingId(null);
     }
